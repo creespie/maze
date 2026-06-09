@@ -74,7 +74,7 @@ def file_parser(filename: str) -> tuple[dict, bool]:
                                 configuration[parsed_line[0]] = False
                             else:
                                 raise ValueError("Wront PERFECT input format")
-                        if parsed_line[0] == "SEED":
+                        elif parsed_line[0] == "SEED":
                             try:
                                 parsed_line[1] = int(parsed_line[1])
                                 if "SEED" in configuration.keys():
