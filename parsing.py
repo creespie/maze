@@ -1,7 +1,7 @@
 import typing
 import io
 
-def file_parser(filename: str) -> dict:
+def file_parser(filename: str) -> tuple[dict, bool]:
     configuration = {}
     try:
         with open(filename) as file:
@@ -19,48 +19,52 @@ def file_parser(filename: str) -> dict:
                         if parsed_line[0] == "WIDTH":
                             try:
                                 parsed_line[1] = int(parsed_line[1])
-                                if parsed_line[1] < 2:
+                                if parsed_line[1] < 2 or "WIDTH" in configuration.keys():
                                     raise ValueError("Wrong WIDTH input format")
                                 else:
                                     configuration[parsed_line[0]] = parsed_line[1]
                             except Exception:
                                 raise ValueError("Wrong WIDTH input format")
-                        if parsed_line[0] == "HEIGHT":
+                        elif parsed_line[0] == "HEIGHT":
                             try:
                                 parsed_line[1] = int(parsed_line[1])
-                                if parsed_line[1] < 2:
+                                if parsed_line[1] < 2 or "HEIGHT" in configuration.keys():
                                     raise ValueError("Wrong HEIGHT input format")
                                 else:
                                     configuration[parsed_line[0]] = parsed_line[1]
                             except Exception:
                                 raise ValueError("Wrong HEIGHT input format")
-                        if parsed_line[0] == "ENTRY":
+                        elif parsed_line[0] == "ENTRY":
                             try:
                                 parsed_line[1] = [int(n.strip()) for n in parsed_line[1].split(",")]
-                                if len(parsed_line[1]) != 2 or parsed_line[1][0] < 0 or parsed_line[1][1] < 0:
+                                if len(parsed_line[1]) != 2 or parsed_line[1][0] < 0 or parsed_line[1][1] < 0 or "ENTRY" in configuration.keys():
                                     raise ValueError("Wrong ENTRY input format")
                                 else:
                                     configuration[parsed_line[0]] = (parsed_line[1][0], parsed_line[1][1])
                             except Exception:
                                 raise ValueError("Wrong ENTRY input format")
-                        if parsed_line[0] == "EXIT":
+                        elif parsed_line[0] == "EXIT":
                             try:
                                 parsed_line[1] = [int(n.strip()) for n in parsed_line[1].split(",")]
-                                if len(parsed_line[1]) != 2 or parsed_line[1][0] < 0 or parsed_line[1][1] < 0:
+                                if len(parsed_line[1]) != 2 or parsed_line[1][0] < 0 or parsed_line[1][1] < 0 or "EXIT" in configuration.keys():
                                     raise ValueError("Wrong EXIT input format")
                                 else:
                                     configuration[parsed_line[0]] = (parsed_line[1][0], parsed_line[1][1])
                             except Exception:
                                 raise ValueError("Wrong EXIT input format")
-                        if parsed_line[0] == "OUTPUT_FILE":
+                        elif parsed_line[0] == "OUTPUT_FILE":
                             try:
+                                if "OUTPUT_FILE" in configuration.keys():
+                                    raise ValueError("Wrong OUTPUT FILE input format")
                                 parsed_line[1] = parsed_line[1].strip()
                                 output_file = open(parsed_line[1], "w")
                                 output_file.close()
                                 configuration[parsed_line[0]] = parsed_line[1]
                             except Exception:
                                 raise ValueError("Wrong OUTPUT FILE input format")
-                        if parsed_line[0] == "PERFECT":
+                        elif parsed_line[0] == "PERFECT":
+                            if "PERFECT" in configuration.keys():
+                                raise ValueError("Wront PERFECT input format")
                             parsed_line[1] = parsed_line[1].strip().capitalize()
                             if parsed_line[1] == "True":
                                 configuration[parsed_line[0]] = True
@@ -68,6 +72,7 @@ def file_parser(filename: str) -> dict:
                                 configuration[parsed_line[0]] = False
                             else:
                                 raise ValueError("Wront PERFECT input format")
-        return configuration
+        return (configuration, True)
     except Exception as e:
         print(e)
+        return (configuration, False)
