@@ -33,9 +33,9 @@ class MazeGenerator:
         self.ouput_file = self.config["OUTPUT_FILE"]
 
         self.maze = self.generate_maze()
-        self.insert_ft_pattern_in_maze()
+        self._insert_ft_pattern_in_maze()
         self.sculpt_maze()
-        self.print_maze()
+        self.render_maze()
         self.save_maze()
 
     def generate_maze(self):
@@ -52,7 +52,7 @@ class MazeGenerator:
             for y in range(self.maze_height)
         ]
 
-    def print_maze(self):
+    def render_maze(self):
         for y in range(self.maze_height):
             line = ""
 
@@ -83,7 +83,7 @@ class MazeGenerator:
                     line += " S "
                 elif [x, y] == self.exit:
                     line += " E "
-                elif self.is_blocked_cell(cell):
+                elif self._is_blocked_cell(cell):
                     line += "███"
                 else:
                     line += "   "
@@ -112,7 +112,7 @@ class MazeGenerator:
         line += "+"
         print(line)
 
-    def is_blocked_cell(self, cell):
+    def _is_blocked_cell(self, cell):
         return (
             cell.up[1] is False
             and cell.down[1] is False
@@ -120,7 +120,7 @@ class MazeGenerator:
             and cell.right[1] is False
         )
 
-    def insert_ft_pattern_in_maze(self):
+    def _insert_ft_pattern_in_maze(self):
         ft_pattern = [
             [1, 0, 0, 0, 1, 1, 1],
             [1, 0, 0, 0, 0, 0, 1],
