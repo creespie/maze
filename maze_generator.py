@@ -17,6 +17,21 @@ class MazeGenerator:
 
         def getParamsAsList(self):
             return [not self.up[0], not self.right[0] ,not  self.down[0], not self.left[0]]
+    
+    class Colors:
+        RESET      = "\033[0m"
+        BG_BLACK   = "\033[40m"
+        BG_RED     = "\033[41m"
+        BG_GREEN   = "\033[42m"
+        BG_YELLOW  = "\033[43m"
+        BG_BLUE    = "\033[44m"
+        BG_MAGENTA = "\033[45m"
+        BG_CYAN    = "\033[46m"
+        BG_WHITE   = "\033[47m"
+        BG_ORANGE  = "\033[48;5;214m"
+        BG_PINK    = "\033[48;5;213m"
+        BG_PURPLE  = "\033[48;5;93m"
+        BG_BROWN   = "\033[48;5;130m"
 
     def __init__(self, config_path: str) -> None:
 
@@ -31,12 +46,21 @@ class MazeGenerator:
         self.exit = list(self.config["EXIT"])
         self.seed = self.config["SEED"]
         self.ouput_file = self.config["OUTPUT_FILE"]
+        
+        self.walls = self.Colors.BG_WHITE
+        self.spaces = self.Colors.BG_BLACK
+        self.picture = self.Colors.BG_CYAN
+        self.color_entry = self.Colors.BG_YELLOW
+        self.color_exit = self.Colors.BG_GREEN
+        self.neutral = self.Colors.RESET    #always resetting console color
+        
 
         self.maze = self.generate_maze()
         self._insert_ft_pattern_in_maze()
         self.sculpt_maze()
         self.render_maze()
         self.save_maze()
+        self.ask_input()
 
     def generate_maze(self):
         return [
@@ -59,14 +83,14 @@ class MazeGenerator:
             for x in range(self.maze_width):
                 cell = self.maze[y][x]
 
-                line += "+"
+                line += f"{self.walls} {self.neutral}"
 
                 if cell.up[0]:
-                    line += "   "
+                    line += f"{self.spaces}   {self.neutral}"
                 else:
-                    line += "---"
+                    line += f"{self.walls}   {self.neutral}"
 
-            line += "+"
+            line += f"{self.walls} {self.neutral}"
             print(line)
 
             line = ""
@@ -75,25 +99,25 @@ class MazeGenerator:
                 cell = self.maze[y][x]
 
                 if cell.left[0]:
-                    line += " "
+                    line += f"{self.spaces} {self.neutral}"
                 else:
-                    line += "|"
+                    line += f"{self.walls} {self.neutral}"
 
                 if [x, y] == self.entry:
-                    line += " S "
+                    line += f"{self.color_entry}   {self.neutral}"
                 elif [x, y] == self.exit:
-                    line += " E "
+                    line += f"{self.color_exit}   {self.neutral}"
                 elif self._is_blocked_cell(cell):
-                    line += "███"
+                    line += f"{self.picture}   {self.neutral}"
                 else:
-                    line += "   "
+                    line += f"{self.spaces}   {self.neutral}"
 
             last = self.maze[y][self.maze_width - 1]
 
             if last.right[0]:
-                line += " "
+                line += f"{self.spaces} {self.neutral}"
             else:
-                line += "|"
+                line += f"{self.walls} {self.neutral}"
 
             print(line)
 
@@ -102,14 +126,14 @@ class MazeGenerator:
         for x in range(self.maze_width):
             cell = self.maze[self.maze_height - 1][x]
 
-            line += "+"
+            line += f"{self.walls} {self.neutral}"
 
             if cell.down[0]:
-                line += "   "
+                line += f"{self.spaces}   {self.neutral}"
             else:
-                line += "---"
+                line += f"{self.walls}   {self.neutral}"
 
-        line += "+"
+        line += f"{self.walls} {self.neutral}"
         print(line)
 
     def _is_blocked_cell(self, cell):
@@ -262,6 +286,67 @@ class MazeGenerator:
             file.write(f"{self.entry}\n")
             file.write(f"{self.exit}\n")
             file.write(f"shortest path\n")
+    
+
+    def change_colors(self):
+        if self.walls == self.Colors.BG_WHITE:
+            self.walls = self.Colors.BG_YELLOW
+            self.spaces = self.Colors.BG_RED
+            self.picture = self.Colors.BG_PURPLE
+            self.color_entry = self.Colors.BG_GREEN
+            self.color_exit = self.Colors.BG_ORANGE
+
+        elif self.walls == self.Colors.BG_YELLOW:
+            self.walls = self.Colors.BG_CYAN
+            self.spaces = self.Colors.BG_BLACK
+            self.picture = self.Colors.BG_BLUE
+            self.color_entry = self.Colors.BG_GREEN
+            self.color_exit = self.Colors.BG_MAGENTA
+
+        elif self.walls == self.Colors.BG_CYAN:
+            self.walls = self.Colors.BG_GREEN
+            self.spaces = self.Colors.BG_BLACK
+            self.picture = self.Colors.BG_BROWN
+            self.color_entry = self.Colors.BG_YELLOW
+            self.color_exit = self.Colors.BG_RED
+
+        elif self.walls == self.Colors.BG_GREEN:
+            self.walls = self.Colors.BG_WHITE
+            self.spaces = self.Colors.BG_BLACK
+            self.picture = self.Colors.BG_BLUE
+            self.color_entry = self.Colors.BG_CYAN
+            self.color_exit = self.Colors.BG_RED
+
+    
+    def ask_input(self):
+        value = input(
+            f"=== A-Maze-Ing ===\n"
+            f"1. Regenerate a new maze\n"
+            f"2. Show/Hide path from entry to exit\n"
+            f"3. Rotate maze colors\n"
+            f"4. Quit\n"
+            f"Choice?(1-4)\n"
+            )
+        if value == "1":
+            self.seed = random.randint(1, 400)
+            self.maze = self.generate_maze()
+            self._insert_ft_pattern_in_maze()
+            self.sculpt_maze()
+            self.render_maze()
+            self.save_maze()
+            self.ask_input()
+        elif value == "2":
+            print("yet to build homie\n")
+        elif value == "3":
+            self.change_colors()
+            self.render_maze()
+            self.ask_input()
+        elif value == "4":
+            print("Quitting it is\n")
+        else:
+            print("Wrooooooong input BRO.\n"
+                  "Pay attention next time.\n")
+
 
 
 
