@@ -4,7 +4,7 @@ class MazeGenerator:
     class Cell:
         def __init__(
             self,
-            up=(False, True),
+            up=(False, True), 
             down=(False, True),
             left=(False, True),
             right=(False, True),
@@ -14,6 +14,9 @@ class MazeGenerator:
             self.left = list(left)
             self.right = list(right)
             self.isVisited = False
+
+        def getParamsAsList(self):
+            return [not self.up[0], not self.right[0] ,not  self.down[0], not self.left[0]]
 
     def __init__(self, config_path: str) -> None:
 
@@ -27,11 +30,13 @@ class MazeGenerator:
         self.entry = list(self.config["ENTRY"])
         self.exit = list(self.config["EXIT"])
         self.seed = self.config["SEED"]
+        self.ouput_file = self.config["OUTPUT_FILE"]
 
         self.maze = self.generate_maze()
         self.insert_ft_pattern_in_maze()
         self.sculpt_maze()
         self.print_maze()
+        self.save_maze()
 
     def generate_maze(self):
         return [
@@ -244,6 +249,21 @@ class MazeGenerator:
 
             if not found:
                 stack.pop()  # backtracking
+    
+
+    def save_maze(self):
+        with open(self.ouput_file, "w") as file:
+            for col in range(self.maze_height):
+                for row in range(self.maze_width):
+                    number = "".join(str(int(i)) for i in self.maze[col][row].getParamsAsList())
+                    file.write(hex(int(number, 2))[2:].capitalize())
+                file.write("\n")
+            file.write("\n")
+            file.write(f"{self.entry}\n")
+            file.write(f"{self.exit}\n")
+            file.write(f"shortest path\n")
+
+
 
 
 if __name__ == "__main__":
