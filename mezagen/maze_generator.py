@@ -1,5 +1,6 @@
 import os
 import random
+import time
 from typing import TypeAlias, cast
 
 from .parsing import file_parser
@@ -585,6 +586,7 @@ class MazeGenerator:
     def ask_input(self) -> None:
         """Handle user interaction."""
         while True:
+            self.animation(8)
             self.render_maze()
 
             value = input(
@@ -609,6 +611,17 @@ class MazeGenerator:
                 print("Wrooooooong input BRO.")
                 print("Pay attention next time.")
                 break
+
+    def _clear(self):
+        os.system("cls" if os.name == "nt" else "clear")
+
+    def animation(self, duration: int) -> None:
+        for _ in range(duration):
+            self._clear()
+            print(f"{self.color_exit}   {self.neutral}{self.picture}   {self.neutral}")
+            print(f"{self.walls}   {self.neutral}{self.color_entry}   {self.neutral}")
+            time.sleep(0.3)
+            self.change_colors()
 
 
 if __name__ == "__main__":
