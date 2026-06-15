@@ -35,10 +35,10 @@ class MazeGenerator:
         def get_params_as_list(self) -> list[bool]:
             """Return closed walls in North, East, South, West order."""
             return [
-                not self.up[0],
-                not self.right[0],
-                not self.down[0],
                 not self.left[0],
+                not self.down[0],
+                not self.right[0],
+                not self.up[0],
             ]
 
     class Colors:
