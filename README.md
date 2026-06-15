@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by lmezzaba, lrossi.*
+*This project has been created as part of the 42 curriculum by lmezzaba, lurossi.*
 
 # A-Maze-ing
 
@@ -299,6 +299,19 @@ During development:
 * PEP 257
 * setuptools Documentation
 
+## Code Quality Checks
+
+Run all mandatory static analysis checks:
+
+```bash
+flake8 . && \
+python3 -m mypy a_maze_ing.py mazegen \
+--warn-return-any \
+--warn-unused-ignores \
+--ignore-missing-imports \
+--disallow-untyped-defs \
+--check-untyped-defs
+```
 ## AI Usage
 
 AI tools were used for:
