@@ -1,3 +1,4 @@
+import os
 import random
 from parsing import file_parser
 
@@ -16,6 +17,7 @@ class MazeGenerator:
             self.left = list(left)
             self.right = list(right)
             self.isVisited = False
+            self.is_solution = False
 
         def getParamsAsList(self):
             return [
@@ -24,6 +26,20 @@ class MazeGenerator:
                 not self.down[0],
                 not self.left[0],
             ]
+
+    class Colors:
+        RESET = "\033[0m"
+        BG_BLACK = "\033[40m"
+        BG_RED = "\033[41m"
+        BG_GREEN = "\033[42m"
+        BG_YELLOW = "\033[43m"
+        BG_BLUE = "\033[44m"
+        BG_MAGENTA = "\033[45m"
+        BG_CYAN = "\033[46m"
+        BG_WHITE = "\033[47m"
+        BG_ORANGE = "\033[48;5;214m"
+        BG_PURPLE = "\033[48;5;93m"
+        BG_BROWN = "\033[48;5;130m"
 
     def __init__(self, config_path: str) -> None:
         self.config, success = file_parser(config_path)
@@ -39,6 +55,15 @@ class MazeGenerator:
         self.output_file = self.config["OUTPUT_FILE"]
         self.is_perfect = self.config["PERFECT"]
 
+        self.walls = self.Colors.BG_WHITE
+        self.spaces = self.Colors.BG_BLACK
+        self.picture = self.Colors.BG_CYAN
+        self.color_entry = self.Colors.BG_YELLOW
+        self.color_exit = self.Colors.BG_GREEN
+        self.solution_color = self.Colors.BG_RED
+        self.neutral = self.Colors.RESET
+        self.show_solution = False
+
         self.maze = self.generate_maze()
         self._insert_ft_pattern_in_maze()
         self.sculpt_maze()
@@ -46,22 +71,8 @@ class MazeGenerator:
         if not self.is_perfect:
             self.make_imperfect()
 
-        self.solution = []
-
-    def get_maze(self):
-        return self.maze
-
-    def get_entry(self):
-        return self.entry
-
-    def get_exit(self):
-        return self.exit
-
-    def get_solution(self):
-        return self.solution
-
-    def get_size(self):
-        return self.maze_width, self.maze_height
+        self.solution = self.solve_maze()
+        self.save_maze()
 
     def generate_maze(self):
         return [
@@ -81,21 +92,22 @@ class MazeGenerator:
             for y in range(self.maze_height)
         ]
 
-    def display(self):
+    def render_maze(self):
+        os.system("clear")
+
         for y in range(self.maze_height):
             line = ""
 
             for x in range(self.maze_width):
                 cell = self.maze[y][x]
-
-                line += "+"
+                line += f"{self.walls} {self.neutral}"
 
                 if cell.up[0]:
-                    line += "   "
+                    line += f"{self.spaces}   {self.neutral}"
                 else:
-                    line += "---"
+                    line += f"{self.walls}   {self.neutral}"
 
-            line += "+"
+            line += f"{self.walls} {self.neutral}"
             print(line)
 
             line = ""
@@ -104,25 +116,27 @@ class MazeGenerator:
                 cell = self.maze[y][x]
 
                 if cell.left[0]:
-                    line += " "
+                    line += f"{self.spaces} {self.neutral}"
                 else:
-                    line += "|"
+                    line += f"{self.walls} {self.neutral}"
 
                 if [x, y] == self.entry:
-                    line += " S "
+                    line += f"{self.color_entry} S {self.neutral}"
                 elif [x, y] == self.exit:
-                    line += " E "
+                    line += f"{self.color_exit} E {self.neutral}"
                 elif self._is_blocked_cell(cell):
-                    line += "███"
+                    line += f"{self.picture}   {self.neutral}"
+                elif self.show_solution and cell.is_solution:
+                    line += f"{self.solution_color} * {self.neutral}"
                 else:
-                    line += "   "
+                    line += f"{self.spaces}   {self.neutral}"
 
             last = self.maze[y][self.maze_width - 1]
 
             if last.right[0]:
-                line += " "
+                line += f"{self.spaces} {self.neutral}"
             else:
-                line += "|"
+                line += f"{self.walls} {self.neutral}"
 
             print(line)
 
@@ -130,16 +144,18 @@ class MazeGenerator:
 
         for x in range(self.maze_width):
             cell = self.maze[self.maze_height - 1][x]
-
-            line += "+"
+            line += f"{self.walls} {self.neutral}"
 
             if cell.down[0]:
-                line += "   "
+                line += f"{self.spaces}   {self.neutral}"
             else:
-                line += "---"
+                line += f"{self.walls}   {self.neutral}"
 
-        line += "+"
+        line += f"{self.walls} {self.neutral}"
         print(line)
+
+        if self.show_solution:
+            print(f"Shortest path: {self.solution}")
 
     def _is_blocked_cell(self, cell):
         return (
@@ -195,8 +211,7 @@ class MazeGenerator:
 
         pattern_h = len(ft_pattern)
         pattern_w = len(ft_pattern[0])
-
-        valid_ft_pattern_pivot = None
+        valid_pivot = None
 
         for pivot_y in range(1, self.maze_height - pattern_h):
             for pivot_x in range(1, self.maze_width - pattern_w):
@@ -210,23 +225,22 @@ class MazeGenerator:
 
                             if [maze_x, maze_y] == self.entry:
                                 is_valid = False
-
                             if [maze_x, maze_y] == self.exit:
                                 is_valid = False
 
                 if is_valid:
-                    valid_ft_pattern_pivot = [pivot_x, pivot_y]
+                    valid_pivot = [pivot_x, pivot_y]
                     break
 
-            if valid_ft_pattern_pivot is not None:
+            if valid_pivot is not None:
                 break
 
-        if valid_ft_pattern_pivot is None:
+        if valid_pivot is None:
             print("Maze too small or entry/exit blocks the 42 pattern")
             return
 
-        pivot_x = valid_ft_pattern_pivot[0]
-        pivot_y = valid_ft_pattern_pivot[1]
+        pivot_x = valid_pivot[0]
+        pivot_y = valid_pivot[1]
 
         for fth in range(pattern_h):
             for ftw in range(pattern_w):
@@ -241,10 +255,8 @@ class MazeGenerator:
                     cell.right = [False, False]
 
     def sculpt_maze(self):
-        random.seed(self.seed)
-
+        random.seed(self.seed )
         x, y = self.entry
-
         self.maze[y][x].isVisited = True
         stack = [(x, y)]
 
@@ -264,7 +276,6 @@ class MazeGenerator:
                 neighbors.append((x + 1, y, "right"))
 
             random.shuffle(neighbors)
-
             found = False
 
             for nx, ny, direction in neighbors:
@@ -276,34 +287,29 @@ class MazeGenerator:
                 if direction == "up":
                     if not current.up[1] or not neighbor.down[1]:
                         continue
-
                     current.up[0] = True
                     neighbor.down[0] = True
 
                 elif direction == "down":
                     if not current.down[1] or not neighbor.up[1]:
                         continue
-
                     current.down[0] = True
                     neighbor.up[0] = True
 
                 elif direction == "left":
                     if not current.left[1] or not neighbor.right[1]:
                         continue
-
                     current.left[0] = True
                     neighbor.right[0] = True
 
                 else:
                     if not current.right[1] or not neighbor.left[1]:
                         continue
-
                     current.right[0] = True
                     neighbor.left[0] = True
 
                 neighbor.isVisited = True
                 stack.append((nx, ny))
-
                 found = True
                 break
 
@@ -311,7 +317,7 @@ class MazeGenerator:
                 stack.pop()
 
     def make_imperfect(self):
-        random.seed(self.seed + 1)
+        random.seed(self.seed + 42)
 
         openings = max(1, (self.maze_width * self.maze_height) // 10)
         opened = 0
@@ -378,6 +384,53 @@ class MazeGenerator:
                         opened += 1
                         break
 
+    def solve_maze(self) -> str:
+        start = tuple(self.entry)
+        end = tuple(self.exit)
+
+        for row in self.maze:
+            for cell in row:
+                cell.is_solution = False
+
+        queue = [(start, "", [start])]
+        visited = {start}
+
+        while queue:
+            (x, y), path, coords = queue.pop(0)
+
+            if (x, y) == end:
+                for px, py in coords:
+                    self.maze[py][px].is_solution = True
+                return path
+
+            cell = self.maze[y][x]
+
+            if cell.up[0] and y > 0 and (x, y - 1) not in visited:
+                visited.add((x, y - 1))
+                queue.append(((x, y - 1), path + "N", coords + [(x, y - 1)]))
+
+            if (
+                cell.right[0]
+                and x < self.maze_width - 1
+                and (x + 1, y) not in visited
+            ):
+                visited.add((x + 1, y))
+                queue.append(((x + 1, y), path + "E", coords + [(x + 1, y)]))
+
+            if (
+                cell.down[0]
+                and y < self.maze_height - 1
+                and (x, y + 1) not in visited
+            ):
+                visited.add((x, y + 1))
+                queue.append(((x, y + 1), path + "S", coords + [(x, y + 1)]))
+
+            if cell.left[0] and x > 0 and (x - 1, y) not in visited:
+                visited.add((x - 1, y))
+                queue.append(((x - 1, y), path + "W", coords + [(x - 1, y)]))
+
+        return ""
+
     def save_maze(self):
         with open(self.output_file, "w") as file:
             for col in range(self.maze_height):
@@ -391,16 +444,80 @@ class MazeGenerator:
                 file.write("\n")
 
             file.write("\n")
-            file.write(f"{self.entry}\n")
-            file.write(f"{self.exit}\n")
-            file.write("shortest path\n")
+            file.write(f"{self.entry[0]},{self.entry[1]}\n")
+            file.write(f"{self.exit[0]},{self.exit[1]}\n")
+            file.write(f"{self.solution}\n")
+
+    def change_colors(self):
+        if self.walls == self.Colors.BG_WHITE:
+            self.walls = self.Colors.BG_YELLOW
+            self.spaces = self.Colors.BG_RED
+            self.picture = self.Colors.BG_PURPLE
+            self.color_entry = self.Colors.BG_GREEN
+            self.color_exit = self.Colors.BG_ORANGE
+
+        elif self.walls == self.Colors.BG_YELLOW:
+            self.walls = self.Colors.BG_CYAN
+            self.spaces = self.Colors.BG_BLACK
+            self.picture = self.Colors.BG_BLUE
+            self.color_entry = self.Colors.BG_GREEN
+            self.color_exit = self.Colors.BG_MAGENTA
+
+        elif self.walls == self.Colors.BG_CYAN:
+            self.walls = self.Colors.BG_GREEN
+            self.spaces = self.Colors.BG_BLACK
+            self.picture = self.Colors.BG_BROWN
+            self.color_entry = self.Colors.BG_YELLOW
+            self.color_exit = self.Colors.BG_RED
+
+        elif self.walls == self.Colors.BG_GREEN:
+            self.walls = self.Colors.BG_WHITE
+            self.spaces = self.Colors.BG_BLACK
+            self.picture = self.Colors.BG_BLUE
+            self.color_entry = self.Colors.BG_CYAN
+            self.color_exit = self.Colors.BG_RED
+
+    def regenerate(self):
+        self.seed = random.randint(1, 100000)
+        self.maze = self.generate_maze()
+        self._insert_ft_pattern_in_maze()
+        self.sculpt_maze()
+
+        if not self.is_perfect:
+            self.make_imperfect()
+
+        self.solution = self.solve_maze()
+        self.save_maze()
+
+    def ask_input(self):
+        while True:
+            self.render_maze()
+
+            value = input(
+                "=== A-Maze-Ing ===\n"
+                "1. Regenerate a new maze\n"
+                "2. Show/Hide path from entry to exit\n"
+                "3. Rotate maze colors\n"
+                "4. Quit\n"
+                "Choice? (1-4)\n"
+            )
+
+            if value == "1":
+                self.regenerate()
+            elif value == "2":
+                self.show_solution = not self.show_solution
+            elif value == "3":
+                self.change_colors()
+            elif value == "4":
+                print("Quitting it is")
+                break
+            else:
+                print("Wrong input")
 
 
 if __name__ == "__main__":
     try:
-
-        maze = MazeGenerator("../config_test.txt")
-        maze.display()
-        maze.save_maze()
+        maze = MazeGenerator("config_test.txt")
+        maze.ask_input()
     except Exception as e:
-        print(e.args)
+        print(type(e).__name__, e)
