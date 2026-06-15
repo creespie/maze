@@ -3,7 +3,7 @@ import random
 import time
 from typing import TypeAlias, cast
 
-from .parsing import file_parser
+from parsing import file_parser
 
 
 Wall: TypeAlias = list[bool]
