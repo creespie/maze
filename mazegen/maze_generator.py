@@ -3,7 +3,7 @@ import random
 import time
 from typing import TypeAlias, cast
 
-from parsing import file_parser
+from .parsing import file_parser
 
 
 Wall: TypeAlias = list[bool]
@@ -612,14 +612,16 @@ class MazeGenerator:
                 print("Pay attention next time.")
                 break
 
-    def _clear(self):
+    def _clear(self) -> None:
         os.system("cls" if os.name == "nt" else "clear")
 
     def animation(self, duration: int) -> None:
         for _ in range(duration):
             self._clear()
-            print(f"{self.color_exit}   {self.neutral}{self.picture}   {self.neutral}")
-            print(f"{self.walls}   {self.neutral}{self.color_entry}   {self.neutral}")
+            print(f"{self.color_exit}   {self.neutral}{self.picture}  "
+                  f" {self.neutral}")
+            print(f"{self.walls}   {self.neutral}{self.color_entry} "
+                  f"  {self.neutral}")
             time.sleep(0.3)
             self.change_colors()
 
