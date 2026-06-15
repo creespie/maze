@@ -1,5 +1,12 @@
-def file_parser(filename: str) -> tuple[dict, bool]:
-    configuration = {}
+from typing import TypeAlias
+
+
+ConfigValue: TypeAlias = int | bool | str | tuple[int, int]
+Config: TypeAlias = dict[str, ConfigValue]
+
+
+def file_parser(filename: str) -> tuple[Config, bool]:
+    configuration: Config = {}
 
     keys_set = {"WIDTH", "HEIGHT", "ENTRY",
                 "EXIT", "OUTPUT_FILE", "PERFECT"}
@@ -23,65 +30,63 @@ def file_parser(filename: str) -> tuple[dict, bool]:
                     if len(parsed_line) != 2:
                         raise ValueError("Wrong input format")
 
-                    parsed_line[0] = parsed_line[0].strip()
-                    parsed_line[1] = parsed_line[1].strip()
+                    key = parsed_line[0].strip()
+                    value = parsed_line[1].strip()
 
-                    if parsed_line[0] not in accepted_keys_set:
+                    if key not in accepted_keys_set:
                         raise ValueError("Wrong key input format")
 
-                    if parsed_line[0] in configuration.keys():
+                    if key in configuration.keys():
                         raise TypeError(
-                            f"{parsed_line[0]} was submitted more than once"
+                            f"{key} was submitted more than once"
                         )
 
-                    if parsed_line[0] == "WIDTH":
+                    if key == "WIDTH":
                         try:
-                            parsed_line[1] = int(parsed_line[1])
-                            if parsed_line[1] < 1:
+                            width = int(value)
+                            if width < 1:
                                 raise TypeError("WIDTH value can't be "
                                                 "lower than 1")
                             else:
-                                configuration[parsed_line[0]] = parsed_line[1]
+                                configuration[key] = width
                         except ValueError:
                             raise ValueError(
                                 "WIDTH must be submitted in the format "
                                 "'WIDTH=number'"
                             )
 
-                    elif parsed_line[0] == "HEIGHT":
+                    elif key == "HEIGHT":
                         try:
-                            parsed_line[1] = int(parsed_line[1])
-                            if parsed_line[1] < 1:
+                            height = int(value)
+                            if height < 1:
                                 raise TypeError("HEIGHT value can't be "
                                                 "lower than 1")
                             else:
-                                configuration[parsed_line[0]] = parsed_line[1]
+                                configuration[key] = height
                         except ValueError:
                             raise ValueError(
                                 "HEIGHT must be submitted in "
                                 "the format 'HEIGHT=number'"
                             )
 
-                    elif parsed_line[0] == "ENTRY":
+                    elif key == "ENTRY":
                         try:
-                            parsed_line[1] = [
-                                int(n.strip()) for n in parsed_line[
-                                    1].split(",")
+                            entry = [
+                                int(n.strip()) for n in value.split(",")
                             ]
 
-                            if len(parsed_line[1]) != 2:
+                            if len(entry) != 2:
                                 raise TypeError(
                                     "ENTRY value must be formatted "
                                     "as number,number"
                                 )
-                            elif parsed_line[
-                                    1][0] < 0 or parsed_line[1][1] < 0:
+                            elif entry[0] < 0 or entry[1] < 0:
                                 raise TypeError("ENTRY values can't "
                                                 "be negatives")
                             else:
-                                configuration[parsed_line[0]] = (
-                                    parsed_line[1][0],
-                                    parsed_line[1][1],
+                                configuration[key] = (
+                                    entry[0],
+                                    entry[1],
                                 )
                         except ValueError:
                             raise ValueError(
@@ -89,27 +94,24 @@ def file_parser(filename: str) -> tuple[dict, bool]:
                                 "'ENTRY=number,number'"
                             )
 
-                    elif parsed_line[0] == "EXIT":
+                    elif key == "EXIT":
                         try:
-                            parsed_line[1] = [
-                                int(n.strip()) for n in parsed_line[
-                                    1].split(",")
+                            exit_coord = [
+                                int(n.strip()) for n in value.split(",")
                             ]
 
-                            if len(parsed_line[1]) != 2:
+                            if len(exit_coord) != 2:
                                 raise TypeError(
                                     "EXIT value must be formatted "
                                     "as number,number"
                                 )
-                            elif parsed_line[
-                                            1][
-                                            0] < 0 or parsed_line[1][1] < 0:
+                            elif exit_coord[0] < 0 or exit_coord[1] < 0:
                                 raise TypeError("EXIT values "
                                                 "can't be negatives")
                             else:
-                                configuration[parsed_line[0]] = (
-                                    parsed_line[1][0],
-                                    parsed_line[1][1],
+                                configuration[key] = (
+                                    exit_coord[0],
+                                    exit_coord[1],
                                 )
                         except ValueError:
                             raise ValueError(
@@ -117,29 +119,27 @@ def file_parser(filename: str) -> tuple[dict, bool]:
                                 "'EXIT=number,number'"
                             )
 
-                    elif parsed_line[0] == "OUTPUT_FILE":
-                        parsed_line[1] = parsed_line[1].strip()
-
-                        if parsed_line[1] == "":
+                    elif key == "OUTPUT_FILE":
+                        if value == "":
                             raise TypeError("OUTPUT_FILE can't be empty")
 
-                        configuration[parsed_line[0]] = parsed_line[1]
+                        configuration[key] = value
 
-                    elif parsed_line[0] == "PERFECT":
-                        parsed_line[1] = parsed_line[1].strip().capitalize()
+                    elif key == "PERFECT":
+                        perfect = value.capitalize()
 
-                        if parsed_line[1] == "True":
-                            configuration[parsed_line[0]] = True
-                        elif parsed_line[1] == "False":
-                            configuration[parsed_line[0]] = False
+                        if perfect == "True":
+                            configuration[key] = True
+                        elif perfect == "False":
+                            configuration[key] = False
                         else:
                             raise TypeError("PERFECT value can only be true "
                                             "or false")
 
-                    elif parsed_line[0] == "SEED":
+                    elif key == "SEED":
                         try:
-                            parsed_line[1] = int(parsed_line[1])
-                            configuration[parsed_line[0]] = parsed_line[1]
+                            seed = int(value)
+                            configuration[key] = seed
                         except ValueError:
                             raise ValueError(
                                 "SEED must be formatted in the format "
@@ -150,18 +150,27 @@ def file_parser(filename: str) -> tuple[dict, bool]:
             if "SEED" not in configuration.keys():
                 configuration["SEED"] = 0
 
-            width = configuration["WIDTH"]
-            height = configuration["HEIGHT"]
-            entry = configuration["ENTRY"]
-            exit = configuration["EXIT"]
+            width_value = configuration["WIDTH"]
+            height_value = configuration["HEIGHT"]
+            entry_value = configuration["ENTRY"]
+            exit_value = configuration["EXIT"]
 
-            if entry == exit:
+            if not isinstance(width_value, int):
+                raise TypeError("WIDTH must be an integer")
+            if not isinstance(height_value, int):
+                raise TypeError("HEIGHT must be an integer")
+            if not isinstance(entry_value, tuple):
+                raise TypeError("ENTRY must be a coordinate")
+            if not isinstance(exit_value, tuple):
+                raise TypeError("EXIT must be a coordinate")
+
+            if entry_value == exit_value:
                 raise ValueError("ENTRY and EXIT must be different")
 
-            if entry[0] >= width or entry[1] >= height:
+            if entry_value[0] >= width_value or entry_value[1] >= height_value:
                 raise ValueError("ENTRY is out of maze bounds")
 
-            if exit[0] >= width or exit[1] >= height:
+            if exit_value[0] >= width_value or exit_value[1] >= height_value:
                 raise ValueError("EXIT is out of maze bounds")
 
             return (configuration, True)
