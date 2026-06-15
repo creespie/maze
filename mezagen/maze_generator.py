@@ -606,7 +606,9 @@ class MazeGenerator:
                 print("Quitting it is")
                 break
             else:
-                print("Wrong input")
+                print("Wrooooooong input BRO.")
+                print("Pay attention next time.")
+                break
 
 
 if __name__ == "__main__":
